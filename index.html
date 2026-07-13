@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Sukuty</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Game Sukuty Mobile</title>
     <style>
         body {
             margin: 0;
@@ -17,17 +17,19 @@
             min-height: 100vh;
             color: white;
             overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
         h1 {
-            margin: 10px 0 5px 0;
-            font-size: 28px;
+            margin: 5px 0 2px 0;
+            font-size: 24px;
             color: #f1c40f;
             text-shadow: 2px 2px #d35400;
         }
         p {
-            margin: 0 0 15px 0;
+            margin: 0 0 10px 0;
             color: #bdc3c7;
-            font-size: 14px;
+            font-size: 12px;
         }
         #gameCanvas {
             background: #34495e;
@@ -35,27 +37,47 @@
             border-radius: 8px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
             display: block;
+            max-width: 90vw;
+            max-height: 60vh;
         }
-        .controls {
+        /* Kontrol Khusus HP Android */
+        .mobile-controls {
+            display: flex;
+            justify-content: space-between;
+            width: 85vw;
+            max-width: 400px;
             margin-top: 15px;
-            background: rgba(0,0,0,0.4);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: center;
-            border: 1px solid #7f8c8d;
+        }
+        .btn-control {
+            width: 45%;
+            height: 60px;
+            background: #e74c3c;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 6px #c0392b;
+            touch-action: manipulation;
+        }
+        .btn-control:active {
+            box-shadow: 0 2px #c0392b;
+            transform: translateY(4px);
+            background: #d63031;
         }
     </style>
 </head>
 <body>
 
     <h1>GAME SUKUTY 🛵✨</h1>
-    <p>Hindari rintangan jalanan dan kumpulkan koin emas!</p>
+    <p>Sentuh tombol di bawah untuk menghindari mobil!</p>
 
     <canvas id="gameCanvas" width="400" height="500"></canvas>
 
-    <div class="controls">
-        <strong>Kontrol:</strong> Gunakan Panah Kiri (←) dan Kanan (→) atau tombol A / D.
+    <!-- Tombol Khusus Layar Sentuh -->
+    <div class="mobile-controls">
+        <button class="btn-control" id="btnLeft">◀️</button>
+        <button class="btn-control" id="btnRight">▶️</button>
     </div>
 
     <script>
@@ -70,10 +92,10 @@
         // Karakter Sukuty (Pemain)
         const scooty = {
             x: canvas.width / 2 - 15,
-            y: canvas.height - 80,
+            y: canvas.height - 90,
             width: 30,
             height: 50,
-            speed: 5,
+            speed: 6,
             color: '#e74c3c'
         };
 
@@ -81,19 +103,49 @@
         let obstacles = [];
         let coins = [];
 
-        // Kontrol Input
+        // Kontrol Input (PC & HP)
         let keys = {};
+        let isMovingLeft = false;
+        let isMovingRight = false;
+
+        // Event Listener PC
         document.addEventListener('keydown', (e) => keys[e.key] = true);
         document.addEventListener('keyup', (e) => keys[e.key] = false);
 
+        // Event Listener HP (Touch)
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+
+        btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); isMovingLeft = true; });
+        btnLeft.addEventListener('touchend', () => isMovingLeft = false);
+        btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); isMovingRight = true; });
+        btnRight.addEventListener('touchend', () => isMovingRight = false);
+
+        // Klik canvas untuk restart saat Game Over (Mudah di HP)
+        canvas.addEventListener('touchstart', () => {
+            if (gameOver) resetGame();
+        });
+        canvas.addEventListener('click', () => {
+            if (gameOver) resetGame();
+        });
+
+        function resetGame() {
+            score = 0;
+            gameOver = false;
+            frames = 0;
+            scooty.x = canvas.width / 2 - 15;
+            obstacles = [];
+            coins = [];
+        }
+
         function spawnObjects() {
-            if (frames % 90 === 0) { 
+            if (frames % 80 === 0) { 
                 let obsX = Math.random() * (canvas.width - 40);
-                obstacles.push({ x: obsX, y: -50, width: 40, height: 40, speed: 4 });
+                obstacles.push({ x: obsX, y: -50, width: 40, height: 40, speed: 4.5 });
             }
-            if (frames % 120 === 0) { 
+            if (frames % 100 === 0) { 
                 let coinX = Math.random() * (canvas.width - 20);
-                coins.push({ x: coinX, y: -30, radius: 10, speed: 3 });
+                coins.push({ x: coinX, y: -30, radius: 10, speed: 3.5 });
             }
         }
 
@@ -103,9 +155,13 @@
             frames++;
             spawnObjects();
 
-            // Gerakan pemain
-            if ((keys['ArrowLeft'] || keys['a'] || keys['A']) && scooty.x > 0) scooty.x -= scooty.speed;
-            if ((keys['ArrowRight'] || keys['d'] || keys['D']) && scooty.x < canvas.width - scooty.width) scooty.x += scooty.speed;
+            // Gerakan pemain (Gabungan Keyboard PC + Touch HP)
+            if ((keys['ArrowLeft'] || keys['a'] || keys['A'] || isMovingLeft) && scooty.x > 0) {
+                scooty.x -= scooty.speed;
+            }
+            if ((keys['ArrowRight'] || keys['d'] || keys['D'] || isMovingRight) && scooty.x < canvas.width - scooty.width) {
+                scooty.x += scooty.speed;
+            }
 
             // Update Rintangan
             for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -141,15 +197,16 @@
         }
 
         function draw() {
-            // Bersihkan Canvas & Gambar Jalanan
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Gambar Jalanan
             ctx.fillStyle = '#7f8c8d';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Garis pembatas jalan (efek bergerak)
+            // Garis pembatas jalan
             ctx.strokeStyle = '#ffffff';
             ctx.setLineDash([20, 20]);
-            ctx.lineDashOffset = -frames * 4;
+            ctx.lineDashOffset = -frames * 5;
             ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.moveTo(canvas.width / 2, 0);
@@ -159,17 +216,16 @@
             // Gambar Sukuty
             ctx.fillStyle = scooty.color;
             ctx.fillRect(scooty.x, scooty.y, scooty.width, scooty.height);
-            // Lampu depan sukuty
             ctx.fillStyle = '#fff';
             ctx.fillRect(scooty.x + 5, scooty.y, scooty.width - 10, 5);
 
-            // Gambar Rintangan (Mobil Hitam)
+            // Gambar Rintangan (Mobil Musuh)
             ctx.fillStyle = '#2c3e50';
             obstacles.forEach(obs => {
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
             });
 
-            // Gambar Koin (Lingkaran Emas)
+            // Gambar Koin
             ctx.fillStyle = '#f1c40f';
             coins.forEach(coin => {
                 ctx.beginPath();
@@ -177,23 +233,29 @@
                 ctx.fill();
             });
 
-            // Gambar Skor di dalam Canvas
+            // Papan Skor
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 20px Arial';
             ctx.textAlign = 'left';
             ctx.fillText(`Skor: ${score}`, 20, 35);
 
-            // Layar Game Over
+            // Tampilan Game Over
             if (gameOver) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
                 ctx.fillStyle = '#e74c3c';
-                ctx.font = 'bold 30px Arial';
+                ctx.font = 'bold 32px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('GAME OVER 💥', canvas.width / 2, canvas.height / 2 - 10);
+                ctx.fillText('GAME OVER 💥', canvas.width / 2, canvas.height / 2 - 20);
+                
                 ctx.fillStyle = '#ffffff';
                 ctx.font = '16px Arial';
-                ctx.fillText('Tekan F5 untuk main lagi', canvas.width / 2, canvas.height / 2 + 25);
+                ctx.fillText(`Total Skor Kamu: ${score}`, canvas.width / 2, canvas.height / 2 + 15);
+                
+                ctx.fillStyle = '#2ecc71';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText('KETUK LAYAR UNTUK MAIN LAGI', canvas.width / 2, canvas.height / 2 + 55);
             }
         }
 
