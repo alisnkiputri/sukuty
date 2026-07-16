@@ -30,23 +30,27 @@
             align-items: center;
         }
 
+        /* Container untuk 3 Logo di atas game */
         .header-logo-container {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
+            margin-bottom: 5px;
         }
 
+        /* Ukuran logo kecil & rapi */
         .game-logo {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 8px;
             object-fit: cover;
+            border: 2px solid #f1c40f;
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
 
         #game-title {
-            margin: 5px 0 2px 0;
+            margin: 2px 0 2px 0;
             font-size: 24px;
             color: #f1c40f;
             text-shadow: 2px 2px #d35400;
@@ -170,8 +174,10 @@
     <div id="header-text">
         <div class="header-logo-container">
             <img src="moko.jpeg" alt="Logo Moko" class="game-logo" onerror="this.style.display='none'">
-            <h1 id="game-title">GAME SUKUTY <span class="emoji">🛵✨</span></h1>
+            <img src="sekolah.jpeg" alt="Logo Sekolah" class="game-logo" onerror="this.style.display='none'">
+            <img src="grup.jpeg" alt="Logo Grup" class="game-logo" onerror="this.style.display='none'">
         </div>
+        <h1 id="game-title">GAME SUKUTY <span class="emoji">🛵✨</span></h1>
         <p id="instruction">Gunakan tombol atau Panah Keyboard (Atas/Bawah/Kiri/Kanan) untuk bergerak!</p>
     </div>
 
@@ -269,7 +275,6 @@
             if (carImg.complete && carImg.naturalWidth !== 0) {
                 ctx.drawImage(carImg, player.x, player.y, playerWidth, playerHeight);
             } else {
-                // Fallback jika gambar belum ter-load
                 ctx.fillStyle = '#e74c3c';
                 ctx.fillRect(player.x, player.y, playerWidth, playerHeight);
             }
