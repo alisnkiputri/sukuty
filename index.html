@@ -52,7 +52,7 @@
             cursor: none; /* Sembunyikan kursor saat di canvas */
         }
 
-        /* Overlay Tombol Kontrol Bawah (seperti di gambar) */
+        /* Overlay Tombol Kontrol Bawah */
         #controls-container {
             display: flex;
             justify-content: space-around;
@@ -84,11 +84,27 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 10px;
+            background-color: rgba(0,0,0,0.9);
+            padding: 30px;
+            border-radius: 15px;
             display: none; /* Sembunyi awal */
-            z-index: 10;
+            z-index: 100;
+        }
+
+        /* Layar Loading awal */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            z-index: 50;
         }
 
     </style>
@@ -98,15 +114,21 @@
     <div id="game-container">
         <div id="header-text">
             <h1 id="game-title">GAME SUKUTY 🛵✨</h1>
-            <p id="game-instruction">Sentuh tombol di bawah atau gunakan panah keyboard untuk menghindari mobil!</p>
+            <p id="game-instruction">Sentuh tombol di bawah atau gunakan panah keyboard untuk menghindari kotak dan ambil koin!</p>
         </div>
 
-        <canvas id="gameCanvas" width="360" height="480"></canvas>
+        <div style="position: relative;">
+            <canvas id="gameCanvas" width="360" height="480"></canvas>
+            
+            <div id="loading-screen">
+                <h3>Memuat Gambar...</h3>
+            </div>
 
-        <div id="game-over-msg">
-            <h2>GAME OVER!</h2>
-            <p id="final-money">Total Uang: Rp 0</p>
-            <button onclick="resetGame()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">Main Lagi</button>
+            <div id="game-over-msg">
+                <h2>GAME OVER!</h2>
+                <p id="final-money">Total Uang: Rp 0</p>
+                <button onclick="resetGame()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #2ecc71; color: white; border: none; border-radius: 5px;">Main Lagi</button>
+            </div>
         </div>
 
         <div id="controls-container">
@@ -121,42 +143,70 @@
         const ctx = canvas.getContext('2d');
         const moneyDisplay = document.getElementById('final-money');
         const gameOverMsg = document.getElementById('game-over-msg');
+        const loadingScreen = document.getElementById('loading-screen');
 
-        // Dimensi objek (px)
-        const playerWidth = 40;
-        const playerHeight = 60;
+        // Dimensi objek (px) - disesuaikan agar proporsional dengan gambar
+        const playerWidth = 60; // Sedikit lebih lebar untuk mobil
+        const playerHeight = 50;
         const obstacleWidth = 50;
         const obstacleHeight = 50;
         const coinRadius = 25; // Diameter 50px
 
         // State Game
-        let isGameRunning = true;
+        let isGameRunning = false;
+        let isImagesLoaded = false;
         let moneyScore = 0;
         let gameLevel = 1;
         let frames = 0;
         
-        // Posisi Pemain (Skuter merah)
+        // Posisi Pemain
         let player = {
             x: canvas.width / 2 - playerWidth / 2, // Tengah awal
-            y: canvas.height - playerHeight - 20, // Dekat bawah
-            speed: 5
+            y: canvas.height - playerHeight - 30, // Dekat bawah
+            speed: 6 // Sedikit lebih cepat
         };
 
         // Array untuk menyimpan objek dinamis
         let obstacles = [];
         let coins = [];
 
-        // Kecepatan objek jatuh (meningkat seiring level)
-        let baseFallSpeed = 3;
+        // Kecepatan objek jatuh
+        let baseFallSpeed = 4;
 
         // Kontrol Input
-        let keys = {
-            left: false,
-            right: false
-        };
+        let keys = { left: false, right: false };
 
-        // --- Event Listeners (Keyboard & Tombol UI) ---
-        
+        // --- PEMUATAN GAMBAR (Penting!) ---
+        let imagesToLoad = 0;
+        let imagesLoadedCount = 0;
+
+        function loadImage(src) {
+            imagesToLoad++;
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+                imagesLoadedCount++;
+                if (imagesLoadedCount === imagesToLoad) {
+                    isImagesLoaded = true;
+                    loadingScreen.style.display = 'none';
+                    // Mulai game loop setelah gambar dimuat
+                    isGameRunning = true;
+                    gameLoop();
+                }
+            };
+            img.onerror = () => {
+                console.error("Gagal memuat gambar: " + src);
+                loadingScreen.innerHTML = "<h3>Gagal Memuat Gambar. Periksa Koneksi Internet.</h3>";
+            };
+            return img;
+        }
+
+        // --- Link Gambar Contoh (VW Beetle Hijau dan Koin Sun-Face) ---
+        // Ganti link ini jika Anda memiliki file gambar sendiri
+        const playerImg = loadImage('https://images.vexels.com/media/users/3/152914/isolated/preview/26e3c54d5884ffb9a2c3e1e813f04f2f-cartoon-vw-beetle-car-by-vexels.png');
+        const coinImg = loadImage('https://upload.wikimedia.org/wikipedia/commons/e/e0/Openclipart_costume_golden_sun_mask.svg'); // Representasi sun-face koin
+
+        // --- Event Listeners ---
         // Keyboard (PC)
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') keys.left = true;
@@ -173,81 +223,59 @@
         document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); keys.right = true; });
         document.getElementById('btn-right').addEventListener('touchend', () => keys.right = false);
         
-        // Dukungan klik mouse untuk tombol UI (PC)
+        // Mouse untuk PC
         document.getElementById('btn-left').addEventListener('mousedown', () => keys.left = true);
         document.getElementById('btn-left').addEventListener('mouseup', () => keys.left = false);
         document.getElementById('btn-right').addEventListener('mousedown', () => keys.right = true);
         document.getElementById('btn-right').addEventListener('mouseup', () => keys.right = false);
 
-
         // --- Fungsi Utama Game ---
 
         function drawPlayer() {
-            // Placeholder Skuter Merah (Kotak Merah)
-            // Ganti dengan ctx.drawImage(img, ...) jika ada file gambar
-            ctx.fillStyle = '#e74c3c'; // Merah Alizarin
-            ctx.fillRect(player.x, player.y, playerWidth, playerHeight);
-            
-            // Gambar detail sederhana skuter (Lampu depan)
-            ctx.fillStyle = 'white';
-            ctx.fillRect(player.x + 15, player.y + 5, 10, 10);
+            // Gambar Mobil Hijau (Gambar Asli)
+            ctx.drawImage(playerImg, player.x, player.y, playerWidth, playerHeight);
         }
 
         function drawObjects() {
-            // Menggambar Rintangan (Kotak Biru)
-            ctx.fillStyle = '#3498db'; // Biru Peter River
+            // Rintangan Kotak Biru (Masih sama seperti di gambar)
+            ctx.fillStyle = '#3498db'; 
             obstacles.forEach(obs => {
                 ctx.fillRect(obs.x, obs.y, obstacleWidth, obstacleHeight);
             });
 
-            // Menggambar Koin (Lingkaran Emas)
-            // Ganti dengan koin berwajah jika ada gambar
-            ctx.fillStyle = '#f1c40f'; // Emas
-            ctx.strokeStyle = '#d35400'; // Oranye gelap untuk pinggiran
-            ctx.lineWidth = 3;
+            // Koin Emas Sun-Face (Gambar Asli)
             coins.forEach(coin => {
-                ctx.beginPath();
-                ctx.arc(coin.x, coin.y, coinRadius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                
-                // Gambar simbol '$' sederhana di tengah koin
-                ctx.fillStyle = '#d35400';
-                ctx.font = 'bold 20px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('$', coin.x, coin.y);
+                // Gambar koin sebagai lingkaran untuk tabrakan, lalu draw gambar di atasnya
+                ctx.drawImage(coinImg, coin.x - coinRadius, coin.y - coinRadius, coinRadius * 2, coinRadius * 2);
             });
         }
 
         function drawUI() {
-            // Area Teks UI di dalam Canvas (seperti di gambar)
-            ctx.fillStyle = '#34495e'; // Warna gelap teks
+            ctx.fillStyle = '#34495e';
             ctx.font = 'bold 18px Segoe UI';
             ctx.textAlign = 'left';
             ctx.fillText(`Uang: Rp ${moneyScore.toLocaleString('id-ID')}`, 15, 25);
             
-            ctx.fillStyle = '#f1c40f'; // Warna kuning level
+            ctx.fillStyle = '#f1c40f';
             ctx.font = 'bold 14px Segoe UI';
             ctx.fillText(`Kecepatan: Lvl ${gameLevel}`, 15, 45);
         }
 
         function drawRoadLines() {
-            // Garis putus-putus tengah jalan
             ctx.strokeStyle = 'white';
             ctx.lineWidth = 4;
-            ctx.setLineDash([20, 20]); // Putus-putus 20px, spasi 20px
+            ctx.setLineDash([20, 20]);
             ctx.beginPath();
             ctx.moveTo(canvas.width / 2, 0);
             ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
-            ctx.setLineDash([]); // Reset agar garis lain tidak putus-putus
+            ctx.setLineDash([]);
         }
 
-        // --- Logika Game (Update & Pergerakan) ---
+        // --- Logika Game ---
 
         function updateGame() {
-            if (!isGameRunning) return;
+            if (!isGameRunning || !isImagesLoaded) return;
 
             frames++;
 
@@ -259,14 +287,12 @@
                 player.x += player.speed;
             }
 
-            // Spawn objek baru secara acak
-            // Munculkan rintangan setiap 100 frame
-            if (frames % 100 === 0) {
+            // Spawn objek baru
+            if (frames % 100 === 0) { // Kotak biru
                 let spawnX = Math.random() * (canvas.width - obstacleWidth);
                 obstacles.push({ x: spawnX, y: -obstacleHeight });
             }
-            // Munculkan koin setiap 150 frame (lebih jarang)
-            if (frames % 150 === 0) {
+            if (frames % 130 === 0) { // Koin emas
                 let spawnX = Math.random() * (canvas.width - (coinRadius * 2)) + coinRadius;
                 coins.push({ x: spawnX, y: -coinRadius * 2 });
             }
@@ -274,30 +300,27 @@
             // Pergerakan objek jatuh
             let currentSpeed = baseFallSpeed + (gameLevel * 0.5);
             obstacles.forEach(obs => obs.y += currentSpeed);
-            coins.forEach(coin => coin.y += currentSpeed * 0.8); // Koin sedikit lebih lambat
+            coins.forEach(coin => coin.y += currentSpeed * 0.8);
 
-            // Hapus objek yang keluar layar (optimasi memori)
-            obstacles = obstacles.filter(obs => obs.y < canvas.height);
-            coins = coins.filter(coin => coin.y < canvas.height);
-
-            // Cek Tabrakan (Collisions)
+            // Cek Tabrakan
             checkCollisions();
 
-            // Naikkan Level seiring waktu
-            if (frames % 1000 === 0) { // Setiap ~16 detik
+            // Naikkan Level
+            if (frames % 1000 === 0) {
                 gameLevel++;
             }
         }
 
         function checkCollisions() {
+            // Hitbox pemain sedikit disempitkan agar lebih fair dengan gambar mobil
             const playerRect = {
-                left: player.x,
-                right: player.x + playerWidth,
-                top: player.y,
-                bottom: player.y + playerHeight
+                left: player.x + 5,
+                right: player.x + playerWidth - 5,
+                top: player.y + 5,
+                bottom: player.y + playerHeight - 5
             };
 
-            // Cek tabrakan rintangan (Kotak vs Kotak)
+            // Cek rintangan kotak
             for (let i = 0; i < obstacles.length; i++) {
                 const obs = obstacles[i];
                 if (
@@ -306,16 +329,14 @@
                     playerRect.top < obs.y + obstacleHeight &&
                     playerRect.bottom > obs.y
                 ) {
-                    // Game Over jika menabrak kotak biru
                     endGame();
                     return;
                 }
             }
 
-            // Cek koleksi koin (Kotak vs Lingkaran - disederhanakan)
+            // Cek koin
             for (let i = coins.length - 1; i >= 0; i--) {
                 const coin = coins[i];
-                // Hitung jarak pusat koin ke titik terdekat di kotak pemain
                 let closestX = Math.max(playerRect.left, Math.min(coin.x, playerRect.right));
                 let closestY = Math.max(playerRect.top, Math.min(coin.y, playerRect.bottom));
                 
@@ -324,9 +345,8 @@
                 let distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
 
                 if (distanceSquared < (coinRadius * coinRadius)) {
-                    // Koin terkoleksi
-                    moneyScore += 100; // Contoh nilai koin
-                    coins.splice(i, 1); // Hapus koin dari array
+                    moneyScore += 100;
+                    coins.splice(i, 1);
                 }
             }
         }
@@ -338,7 +358,6 @@
         }
 
         function resetGame() {
-            // Reset semua state
             isGameRunning = true;
             moneyScore = 0;
             gameLevel = 1;
@@ -350,26 +369,20 @@
         }
 
         // --- Loop Utama Game ---
-
         function gameLoop() {
-            // Bersihkan Canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!isImagesLoaded) return; // Tunggu gambar dimuat
 
-            // Gambar elemen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawRoadLines();
             drawObjects();
             drawPlayer();
             drawUI();
-
-            // Update logika
             updateGame();
 
-            // Minta frame berikutnya
             requestAnimationFrame(gameLoop);
         }
 
-        // Mulai game
-        gameLoop();
+        // Game akan otomatis mulai saat gambar dimuat (lihat fungsi loadImage)
 
     </script>
 </body>
