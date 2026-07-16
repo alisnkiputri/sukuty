@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Game Sukuty Mandiri - PASTI JALAN</title>
+    <title>Game Sukuty - Maju Mundur & Akselerasi Skor</title>
     <style>
         /* --- Reset & Layout Dasar --- */
         body {
             margin: 0;
             padding: 0;
-            background: #2c3e50; /* Warna gelap monitor */
+            background: #2c3e50;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
@@ -17,12 +17,11 @@
             justify-content: center;
             min-height: 100vh;
             color: white;
-            overflow: hidden; /* Mencegah scroll saat main di HP */
+            overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
         }
 
-        /* Container Judul (Header) */
         #header-text {
             text-align: center;
             margin-bottom: 10px;
@@ -31,12 +30,8 @@
         #game-title {
             margin: 5px 0 2px 0;
             font-size: 24px;
-            color: #f1c40f; /* Warna kuning */
+            color: #f1c40f;
             text-shadow: 2px 2px #d35400;
-        }
-
-        #game-title span.emoji {
-            font-size: 20px;
         }
 
         #instruction {
@@ -45,31 +40,26 @@
             font-size: 12px;
         }
 
-        /* --- Bingkai Canvas (Monitor area) --- */
+        /* --- Bingkai Canvas --- */
         #game-viewport {
-            position: relative; /* Wadah untuk overlay */
-            background-color: #bdc3c7; /* Latar biru muda layar game */
-            border: 4px solid #f1c40f; /* Bingkai kuning tebal */
+            position: relative;
+            background-color: #bdc3c7;
+            border: 4px solid #f1c40f;
             border-radius: 12px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
             max-width: 90vw;
             max-height: 60vh;
             overflow: hidden;
-            display: flex; /* Centering canvas */
+            display: flex;
             justify-content: center;
             align-items: center;
         }
 
         #gameCanvas {
-            display: block; /* Menghilangkan celah bawah */
+            display: block;
             background: #bdc3c7;
-            cursor: none; /* Sembunyikan kursor di canvas */
+            cursor: none;
         }
-
-        /* Area Teks UI di dalam Canvas digambar oleh JS */
-
-        /* --- Layar Loading (Dihapus karena game ini mandiri) --- */
-        /* #loading-screen { ... } */
 
         /* --- Layar Game Over --- */
         #game-over-screen {
@@ -79,7 +69,7 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.9);
-            display: none; /* Sembunyi awal */
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -117,25 +107,25 @@
             transform: translateY(3px);
         }
 
-        /* --- Tombol Kontrol Bawah (Mobile) --- */
+        /* --- Tombol Kontrol Bawah (Layout D-Pad 4 Arah) --- */
         .mobile-controls {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
             width: 85vw;
-            max-width: 400px;
+            max-width: 280px;
             margin-top: 15px;
         }
 
         .btn-control {
-            width: 45%;
-            height: 60px;
-            background-color: #e74c3c; /* Placeholder merah tombol */
+            height: 50px;
+            background-color: #e74c3c;
             border: none;
             border-radius: 12px;
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
-            box-shadow: 0 6px #c0392b; /* Efek 3D */
+            box-shadow: 0 5px #c0392b;
             touch-action: manipulation;
             cursor: pointer;
             outline: none;
@@ -146,9 +136,15 @@
 
         .btn-control:active {
             box-shadow: 0 2px #c0392b;
-            transform: translateY(4px);
+            transform: translateY(3px);
             background-color: #d63031;
         }
+
+        /* Posisi grid kontrol */
+        #btnUp { grid-column: 2; grid-row: 1; }
+        #btnLeft { grid-column: 1; grid-row: 2; }
+        #btnRight { grid-column: 3; grid-row: 2; }
+        #btnDown { grid-column: 2; grid-row: 2; }
 
     </style>
 </head>
@@ -156,7 +152,7 @@
 
     <div id="header-text">
         <h1 id="game-title">GAME SUKUTY <span class="emoji">🛵✨</span></h1>
-        <p id="instruction">Sentuh tombol di bawah atau gunakan panah keyboard untuk menghindari kotak dan ambil koin!</p>
+        <p id="instruction">Gunakan tombol atau Panah Keyboard (Atas/Bawah/Kiri/Kanan) untuk bergerak!</p>
     </div>
 
     <div id="game-viewport">
@@ -170,98 +166,99 @@
     </div>
 
     <div class="mobile-controls">
+        <button class="btn-control" id="btnUp">⬆️</button>
         <button class="btn-control" id="btnLeft">◀️</button>
+        <button class="btn-control" id="btnDown">⬇️</button>
         <button class="btn-control" id="btnRight">▶️</button>
     </div>
 
     <script>
-        // --- Setup & Variabel Global ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const gameOverScreen = document.getElementById('game-over-screen');
         const finalMoneyText = document.getElementById('final-money');
 
-        // Dimensi objek (px)
+        // Dimensi objek
         const playerWidth = 40;
         const playerHeight = 60;
         const obstacleWidth = 50;
         const obstacleHeight = 50;
-        const coinRadius = 25; // Diameter 50px
+        const coinRadius = 20;
 
         // State Game
-        let isGameRunning = true; // Game MANDIRI, langsung jalan
+        let isGameRunning = true;
         let moneyScore = 0;
-        let gameLevel = 1;
         let frames = 0;
-        let gameSpeed = 4; // Kecepatan objek jatuh (px per frame)
+        let baseSpeed = 4; // Kecepatan dasar
+        let currentSpeed = 4; // Kecepatan dinamis berdasarkan skor
         
-        // Posisi Pemain (Bentuk kotak merah)
+        // Posisi Pemain
         let player = {
-            x: canvas.width / 2 - playerWidth / 2, // Tengah awal
-            y: canvas.height - playerHeight - 30, // Dekat bawah
+            x: canvas.width / 2 - playerWidth / 2,
+            y: canvas.height - playerHeight - 30, // Posisi awal dekat bawah
             speed: 5
         };
 
-        // Array untuk menyimpan objek dinamis
-        let obstacles = []; // Bentuk kotak biru
-        let coins = []; // Bentuk lingkaran emas berlogo '$'
+        let obstacles = [];
+        let coins = [];
 
-        // Kontrol Input
-        let keys = { left: false, right: false };
+        // Kontrol Input 4 Arah
+        let keys = { left: false, right: false, up: false, down: false };
 
-        // --- Event Listeners ---
-        // Keyboard (PC)
+        // --- Event Listeners Keyboard ---
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') keys.left = true;
             if (e.key === 'ArrowRight') keys.right = true;
+            if (e.key === 'ArrowUp') keys.up = true;
+            if (e.key === 'ArrowDown') keys.down = true;
         });
         document.addEventListener('keyup', (e) => {
             if (e.key === 'ArrowLeft') keys.left = false;
             if (e.key === 'ArrowRight') keys.right = false;
+            if (e.key === 'ArrowUp') keys.up = false;
+            if (e.key === 'ArrowDown') keys.down = false;
         });
 
-        // Tombol UI Bawah (Mobile/PC)
-        // Kiri
-        document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); keys.left = true; });
-        document.getElementById('btnLeft').addEventListener('touchend', () => keys.left = false);
-        document.getElementById('btnLeft').addEventListener('mousedown', () => keys.left = true);
-        document.getElementById('btnLeft').addEventListener('mouseup', () => keys.left = false);
-        document.getElementById('btnLeft').addEventListener('mouseleave', () => keys.left = false); // Jika kursor keluar tombol
+        // --- Helper Binding Tombol Layar ---
+        function bindButton(id, keyName) {
+            const btn = document.getElementById(id);
+            const start = (e) => { e.preventDefault(); keys[keyName] = true; };
+            const end = () => { keys[keyName] = false; };
+            
+            btn.addEventListener('touchstart', start);
+            btn.addEventListener('touchend', end);
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', end);
+        }
 
-        // Kanan
-        document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); keys.right = true; });
-        document.getElementById('btnRight').addEventListener('touchend', () => keys.right = false);
-        document.getElementById('btnRight').addEventListener('mousedown', () => keys.right = true);
-        document.getElementById('btnRight').addEventListener('mouseup', () => keys.right = false);
-        document.getElementById('btnRight').addEventListener('mouseleave', () => keys.right = false);
+        bindButton('btnLeft', 'left');
+        bindButton('btnRight', 'right');
+        bindButton('btnUp', 'up');
+        bindButton('btnDown', 'down');
 
-        // Restart Game
-        document.getElementById('restart-btn').addEventListener('click', () => {
-            resetGame();
-        });
+        document.getElementById('restart-btn').addEventListener('click', resetGame);
 
-        // --- Fungsi Utama Game ---
-
+        // --- Render ---
         function drawPlayer() {
-            // Gambar Kotak Merah Cerah (Pemain/Skuter)
-            ctx.fillStyle = '#e74c3c'; // Merah Alizarin
+            ctx.fillStyle = '#e74c3c';
             ctx.fillRect(player.x, player.y, playerWidth, playerHeight);
             
-            // Gambar detail sederhana (Lampu)
+            // Lampu depan
             ctx.fillStyle = 'white';
-            ctx.fillRect(player.x + 15, player.y + 10, 10, 10);
+            ctx.fillRect(player.x + 15, player.y + 8, 10, 8);
         }
 
         function drawObjects() {
-            // Menggambar Rintangan (Kotak Biru Peter River)
+            // Obstacle / Mobil Musuh
             ctx.fillStyle = '#3498db'; 
             obstacles.forEach(obs => {
                 ctx.fillRect(obs.x, obs.y, obstacleWidth, obstacleHeight);
             });
 
-            // Menggambar Koin (Lingkaran Emas berlogo '$')
-            ctx.fillStyle = '#f1c40f'; // Emas
-            ctx.strokeStyle = '#d35400'; // Pinggiran oranye gelap
+            // Koin
+            ctx.fillStyle = '#f1c40f';
+            ctx.strokeStyle = '#d35400';
             ctx.lineWidth = 3;
             coins.forEach(coin => {
                 ctx.beginPath();
@@ -269,9 +266,8 @@
                 ctx.fill();
                 ctx.stroke();
                 
-                // Gambar simbol '$' sederhana
                 ctx.fillStyle = '#d35400';
-                ctx.font = 'bold 20px Arial';
+                ctx.font = 'bold 16px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('$', coin.x, coin.y);
@@ -279,19 +275,17 @@
         }
 
         function drawUI() {
-            // Gambar teks UI langsung di atas Canvas
-            ctx.fillStyle = '#34495e'; // Warna gelap teks
-            ctx.font = 'bold 18px Segoe UI';
+            ctx.fillStyle = '#34495e';
+            ctx.font = 'bold 16px Segoe UI';
             ctx.textAlign = 'left';
             ctx.fillText(`Uang: Rp ${moneyScore.toLocaleString('id-ID')}`, 15, 25);
             
-            ctx.fillStyle = '#f1c40f'; // Warna kuning kecepatan
+            ctx.fillStyle = '#e74c3c';
             ctx.font = 'bold 14px Segoe UI';
-            ctx.fillText(`Kecepatan: Lvl ${gameLevel}`, 15, 45);
+            ctx.fillText(`Laju Game: ${currentSpeed.toFixed(1)}x`, 15, 45);
         }
 
         function drawRoadLines() {
-            // Garis putus-putus tengah jalan
             ctx.strokeStyle = 'white';
             ctx.lineWidth = 4;
             ctx.setLineDash([20, 20]);
@@ -299,50 +293,45 @@
             ctx.moveTo(canvas.width / 2, 0);
             ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
-            ctx.setLineDash([]); // Reset agar garis lain tidak putus-putus
+            ctx.setLineDash([]);
         }
 
-        // --- Logika Game ---
-
+        // --- Logika Update ---
         function updateGame() {
             if (!isGameRunning) return;
 
             frames++;
 
-            // Pergerakan Pemain
-            if (keys.left && player.x > 0) {
-                player.x -= player.speed;
-            }
-            if (keys.right && player.x < canvas.width - playerWidth) {
-                player.x += player.speed;
-            }
+            // Hitung kecepatan berdasarkan Skor (Semakin tinggi skor, makin cepat)
+            currentSpeed = baseSpeed + (moneyScore / 300);
 
-            // Spawn objek baru secara acak
-            if (frames % 100 === 0) { // Kotak musuh
+            // Pergerakan Pemain 4 Arah
+            if (keys.left && player.x > 0) player.x -= player.speed;
+            if (keys.right && player.x < canvas.width - playerWidth) player.x += player.speed;
+            if (keys.up && player.y > 0) player.y -= player.speed; // Maju ke atas
+            if (keys.down && player.y < canvas.height - playerHeight) player.y += player.speed; // Mundur ke bawah
+
+            // Interval spawn rintangan menyesuaikan kecepatan
+            let spawnInterval = Math.max(30, Math.floor(90 - (currentSpeed * 5)));
+            if (frames % spawnInterval === 0) {
                 let spawnX = Math.random() * (canvas.width - obstacleWidth);
                 obstacles.push({ x: spawnX, y: -obstacleHeight });
             }
-            if (frames % 150 === 0) { // Koin emas (lebih jarang)
+
+            if (frames % 120 === 0) {
                 let spawnX = Math.random() * (canvas.width - (coinRadius * 2)) + coinRadius;
                 coins.push({ x: spawnX, y: -coinRadius * 2 });
             }
 
-            // Pergerakan objek jatuh
-            let currentSpeed = gameSpeed + (gameLevel * 0.5);
+            // Pergerakan Objek Jatuh
             obstacles.forEach(obs => obs.y += currentSpeed);
-            coins.forEach(coin => coin.y += currentSpeed * 0.8); // Koin sedikit lebih lambat
+            coins.forEach(coin => coin.y += currentSpeed * 0.85);
 
-            // Hapus objek yang keluar layar
+            // Filter objek luar layar
             obstacles = obstacles.filter(obs => obs.y < canvas.height);
             coins = coins.filter(coin => coin.y < canvas.height);
 
-            // Cek Tabrakan
             checkCollisions();
-
-            // Naikkan Level
-            if (frames % 1000 === 0) { // Setiap ~16 detik
-                gameLevel++;
-            }
         }
 
         function checkCollisions() {
@@ -353,7 +342,7 @@
                 bottom: player.y + playerHeight
             };
 
-            // Cek rintangan kotak (Kotak vs Kotak)
+            // Cek Tabrakan Rintangan
             for (let i = 0; i < obstacles.length; i++) {
                 const obs = obstacles[i];
                 if (
@@ -367,7 +356,7 @@
                 }
             }
 
-            // Cek koin (Kotak vs Lingkaran - disederhanakan)
+            // Cek Ambil Koin
             for (let i = coins.length - 1; i >= 0; i--) {
                 const coin = coins[i];
                 let closestX = Math.max(playerRect.left, Math.min(coin.x, playerRect.right));
@@ -378,7 +367,7 @@
                 let distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
 
                 if (distanceSquared < (coinRadius * coinRadius)) {
-                    moneyScore += 100;
+                    moneyScore += 100; // Tambah Skor
                     coins.splice(i, 1);
                 }
             }
@@ -392,19 +381,19 @@
 
         function resetGame() {
             moneyScore = 0;
-            gameLevel = 1;
+            currentSpeed = baseSpeed;
             frames = 0;
             player.x = canvas.width / 2 - playerWidth / 2;
+            player.y = canvas.height - playerHeight - 30;
             obstacles = [];
             coins = [];
             gameOverScreen.style.display = 'none';
             isGameRunning = true;
         }
 
-        // --- Loop Utama Game ---
         function gameLoop() {
             if (isGameRunning) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height); // Bersihkan canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 drawRoadLines();
                 drawObjects();
                 drawPlayer();
@@ -414,9 +403,7 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Mulai game loop
         gameLoop();
-
     </script>
 </body>
 </html>
