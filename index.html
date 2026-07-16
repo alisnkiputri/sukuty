@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Game Sukuty Mobile - Fix</title>
+    <title>Game Sukuty Mobile</title>
     <style>
-        /* --- Reset & Layout Dasar --- */
         body {
             margin: 0;
             padding: 0;
-            background: #2c3e50; /* Warna gelap monitor */
+            background: #2c3e50;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
@@ -17,130 +16,31 @@
             justify-content: center;
             min-height: 100vh;
             color: white;
-            overflow: hidden; /* Mencegah scroll saat main di HP */
+            overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
         }
-
-        /* Container Judul (Header) */
-        #header-text {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        #game-title {
+        h1 {
             margin: 5px 0 2px 0;
             font-size: 24px;
-            color: #f1c40f; /* Warna kuning */
+            color: #f1c40f;
             text-shadow: 2px 2px #d35400;
         }
-
-        #game-title span.emoji {
-            font-size: 20px;
-        }
-
-        #instruction {
-            margin: 0;
+        p {
+            margin: 0 0 10px 0;
             color: #bdc3c7;
             font-size: 12px;
         }
-
-        /* --- Bingkai Canvas (Monitor area) --- */
-        #game-viewport {
-            position: relative; /* Wadah untuk overlay */
-            background-color: #bdc3c7; /* Latar biru muda layar game */
-            border: 4px solid #f1c40f; /* Bingkai kuning */
+        #gameCanvas {
+            background: #34495e;
+            border: 4px solid #f1c40f;
             border-radius: 8px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            display: block;
             max-width: 90vw;
             max-height: 60vh;
-            overflow: hidden;
         }
-
-        #gameCanvas {
-            display: block; /* Menghilangkan celah bawah */
-            max-width: 100%;
-            height: auto;
-        }
-
-        /* Area Teks UI di dalam Canvas (Score & Level) */
-        #ui-overlay {
-            position: absolute;
-            top: 10px;
-            left: 15px;
-            z-index: 10; /* Berada di atas objek game */
-            pointer-events: none; /* Klik tembus ke canvas */
-        }
-
-        #score-display {
-            font-size: 18px;
-            font-weight: bold;
-            color: #34495e; /* Warna gelap skor */
-            margin: 0;
-        }
-
-        #speed-display {
-            font-size: 14px;
-            color: #f1c40f; /* Warna kuning kecepatan */
-            margin: 2px 0 0 0;
-        }
-
-        /* --- Layar Loading --- */
-        #loading-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.85);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            border-radius: 8px;
-        }
-
-        /* --- Layar Game Over --- */
-        #game-over-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-            display: none; /* Sembunyi awal */
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            color: white;
-            border-radius: 8px;
-        }
-
-        #game-over-screen h2 {
-            font-size: 32px;
-            color: #e74c3c;
-            margin: 0 0 10px 0;
-        }
-
-        #game-over-screen p {
-            margin: 5px 0;
-            font-size: 18px;
-        }
-
-        #restart-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        /* --- Tombol Kontrol Bawah (Mobile) --- */
+        /* Kontrol Khusus HP Android */
         .mobile-controls {
             display: flex;
             justify-content: space-between;
@@ -148,339 +48,224 @@
             max-width: 400px;
             margin-top: 15px;
         }
-
         .btn-control {
             width: 45%;
             height: 60px;
-            background-color: #e74c3c; /* Placeholder merah tombol */
+            background: #e74c3c;
             border: none;
             border-radius: 12px;
             color: white;
             font-size: 24px;
             font-weight: bold;
-            box-shadow: 0 6px #c0392b; /* Efek 3D */
+            box-shadow: 0 6px #c0392b;
             touch-action: manipulation;
-            cursor: pointer;
-            outline: none;
         }
-
         .btn-control:active {
             box-shadow: 0 2px #c0392b;
             transform: translateY(4px);
-            background-color: #d63031;
+            background: #d63031;
         }
-
-        /* GANTI INI DENGAN LINK GAMBAR TOMBOL KIRI/KANAN ANDA SENDIRI JIKA ADA */
-        #btnLeft {
-            /* background-image: url('tombol_kiri.png'); */
-            /* background-color: transparent; border: none; */
-        }
-        
-        #btnRight {
-            /* background-image: url('tombol_kanan.png'); */
-            /* background-color: transparent; border: none; */
-        }
-
     </style>
 </head>
 <body>
 
-    <!-- UI Atas -->
-    <div id="header-text">
-        <h1 id="game-title">GAME SUKUTY <span class="emoji">🛵✨</span></h1>
-        <p id="instruction">Sentuh tombol di bawah atau gunakan panah keyboard untuk menghindari kotak dan ambil koin!</p>
-    </div>
+    <h1>GAME SUKUTY 🛵✨</h1>
+    <p>Sentuh tombol di bawah untuk menghindari mobil!</p>
 
-    <!-- Area Permainan Aktif (Viewport) -->
-    <div id="game-viewport">
-        
-        <!-- Overlay UI -->
-        <div id="ui-overlay">
-            <p id="score-display">Uang: Rp 0</p>
-            <p id="speed-display">Kecepatan: Lvl 1</p>
-        </div>
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
 
-        <!-- Layar Loading -->
-        <div id="loading-screen">
-            <h3>Memuat Gambar...</h3>
-        </div>
-
-        <!-- Canvas Game Utama -->
-        <canvas id="gameCanvas" width="400" height="500"></canvas>
-
-        <!-- Layar Game Over -->
-        <div id="game-over-screen">
-            <h2>GAME OVER!</h2>
-            <p id="final-money">Total Uang: Rp 0</p>
-            <button id="restart-btn">Main Lagi</button>
-        </div>
-    </div>
-
-    <!-- Tombol Kontrol Bawah (Mobile) -->
+    <!-- Tombol Khusus Layar Sentuh -->
     <div class="mobile-controls">
         <button class="btn-control" id="btnLeft">◀️</button>
         <button class="btn-control" id="btnRight">▶️</button>
     </div>
 
     <script>
-        // --- Setup & Variabel Global ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const viewport = document.getElementById('game-viewport');
-        const scoreDisplay = document.getElementById('score-display');
-        const speedDisplay = document.getElementById('speed-display');
-        const loadingScreen = document.getElementById('loading-screen');
-        const gameOverScreen = document.getElementById('game-over-screen');
-        const finalMoneyText = document.getElementById('final-money');
-
-        // Dimensi objek (px) - disesuaikan agar proporsional dengan gambar
-        const playerWidth = 45; // Sedikit lebih besar
-        const playerHeight = 70;
-        const obstacleWidth = 50; // Kotak biru
-        const obstacleHeight = 50;
-        const coinRadius = 25; // Diameter 50px
 
         // State Game
-        let isGameRunning = false;
-        let isImagesLoaded = false;
-        let moneyScore = 0;
-        let gameLevel = 1;
+        let score = 0;
+        let gameOver = false;
         let frames = 0;
-        let gameSpeed = 4; // Kecepatan objek jatuh (px per frame)
-        
-        // Posisi Pemain (Skuter)
-        let player = {
-            x: canvas.width / 2 - playerWidth / 2, // Tengah awal
-            y: canvas.height - playerHeight - 30, // Dekat bawah
-            speed: 6 // Kecepatan gerak skuter
+
+        // Karakter Sukuty (Pemain)
+        const scooty = {
+            x: canvas.width / 2 - 15,
+            y: canvas.height - 90,
+            width: 30,
+            height: 50,
+            speed: 6,
+            color: '#e74c3c'
         };
 
-        // Array untuk menyimpan objek dinamis
-        let obstacles = []; // Rintangan kotak biru
-        let coins = []; // Koin berwajah
+        // Rintangan & Koin
+        let obstacles = [];
+        let coins = [];
 
-        // Kontrol Input
-        let keys = { left: false, right: false };
+        // Kontrol Input (PC & HP)
+        let keys = {};
+        let isMovingLeft = false;
+        let isMovingRight = false;
 
-        // --- PEMUATAN GAMBAR (Kunci perbaikan!) ---
-        let imagesToLoad = 0;
-        let imagesLoadedCount = 0;
+        // Event Listener PC
+        document.addEventListener('keydown', (e) => keys[e.key] = true);
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
 
-        function loadImage(src) {
-            imagesToLoad++;
-            const img = new Image();
-            img.src = src;
-            img.onload = () => {
-                imagesLoadedCount++;
-                if (imagesLoadedCount === imagesToLoad) {
-                    isImagesLoaded = true;
-                    loadingScreen.style.display = 'none';
-                    isGameRunning = true; // Jalankan loop game
-                    gameLoop();
+        // Event Listener HP (Touch)
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+
+        btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); isMovingLeft = true; });
+        btnLeft.addEventListener('touchend', () => isMovingLeft = false);
+        btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); isMovingRight = true; });
+        btnRight.addEventListener('touchend', () => isMovingRight = false);
+
+        // Klik canvas untuk restart saat Game Over (Mudah di HP)
+        canvas.addEventListener('touchstart', () => {
+            if (gameOver) resetGame();
+        });
+        canvas.addEventListener('click', () => {
+            if (gameOver) resetGame();
+        });
+
+        function resetGame() {
+            score = 0;
+            gameOver = false;
+            frames = 0;
+            scooty.x = canvas.width / 2 - 15;
+            obstacles = [];
+            coins = [];
+        }
+
+        function spawnObjects() {
+            if (frames % 80 === 0) { 
+                let obsX = Math.random() * (canvas.width - 40);
+                obstacles.push({ x: obsX, y: -50, width: 40, height: 40, speed: 4.5 });
+            }
+            if (frames % 100 === 0) { 
+                let coinX = Math.random() * (canvas.width - 20);
+                coins.push({ x: coinX, y: -30, radius: 10, speed: 3.5 });
+            }
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            frames++;
+            spawnObjects();
+
+            // Gerakan pemain (Gabungan Keyboard PC + Touch HP)
+            if ((keys['ArrowLeft'] || keys['a'] || keys['A'] || isMovingLeft) && scooty.x > 0) {
+                scooty.x -= scooty.speed;
+            }
+            if ((keys['ArrowRight'] || keys['d'] || keys['D'] || isMovingRight) && scooty.x < canvas.width - scooty.width) {
+                scooty.x += scooty.speed;
+            }
+
+            // Update Rintangan
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].y += obstacles[i].speed;
+
+                // Cek Tabrakan Rintangan
+                if (scooty.x < obstacles[i].x + obstacles[i].width &&
+                    scooty.x + scooty.width > obstacles[i].x &&
+                    scooty.y < obstacles[i].y + obstacles[i].height &&
+                    scooty.y + scooty.height > obstacles[i].y) {
+                    gameOver = true;
                 }
-            };
-            img.onerror = () => {
-                console.error("Gagal memuat gambar: " + src);
-                loadingScreen.innerHTML = "<h3>Gagal Memuat Gambar. Periksa Koneksi Internet.</h3>";
-            };
-            return img;
+
+                if (obstacles[i].y > canvas.height) obstacles.splice(i, 1);
+            }
+
+            // Update Koin
+            for (let i = coins.length - 1; i >= 0; i--) {
+                coins[i].y += coins[i].speed;
+
+                // Cek Ambil Koin
+                let distX = Math.abs(coins[i].x - (scooty.x + scooty.width/2));
+                let distY = Math.abs(coins[i].y - (scooty.y + scooty.height/2));
+
+                if (distX < (scooty.width/2 + coins[i].radius) && distY < (scooty.height/2 + coins[i].radius)) {
+                    score += 10;
+                    coins.splice(i, 1);
+                    continue;
+                }
+
+                if (coins[i].y > canvas.height) coins.splice(i, 1);
+            }
         }
 
-        // --- Link Gambar Contoh (Mobil, Koin, Skuter Asli) ---
-        // Ganti link ini jika Anda memiliki file gambar sendiri (misal: "car.png")
-        const obstacleCarImg = loadImage('https://images.vexels.com/media/users/3/152914/isolated/preview/26e3c54d5884ffb9a2c3e1e813f04f2f-cartoon-vw-beetle-car-by-vexels.png');
-        const coinImg = loadImage('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Openclipart_costume_golden_sun_mask.svg/480px-Openclipart_costume_golden_sun_mask.svg.png'); // Koin sun-face
-        const scooterImg = loadImage('https://images.vexels.com/media/users/3/135967/isolated/preview/13813b5d2b781a79f0413444445c7eb1-retro-scooter-drawing-by-vexels.png'); // Contoh skuter
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Gambar Jalanan
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // --- Event Listeners ---
-        // Keyboard (PC)
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') keys.left = true;
-            if (e.key === 'ArrowRight') keys.right = true;
-        });
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft') keys.left = false;
-            if (e.key === 'ArrowRight') keys.right = false;
-        });
-
-        // Tombol UI Bawah (Mobile)
-        document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); keys.left = true; });
-        document.getElementById('btnLeft').addEventListener('touchend', () => keys.left = false);
-        document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); keys.right = true; });
-        document.getElementById('btnRight').addEventListener('touchend', () => keys.right = false);
-        
-        // Juga dukung klik mouse untuk tombol UI (PC)
-        document.getElementById('btnLeft').addEventListener('mousedown', () => keys.left = true);
-        document.getElementById('btnLeft').addEventListener('mouseup', () => keys.left = false);
-        document.getElementById('btnRight').addEventListener('mousedown', () => keys.right = true);
-        document.getElementById('btnRight').addEventListener('mouseup', () => keys.right = false);
-
-        // Restart Game
-        document.getElementById('restart-btn').addEventListener('click', () => {
-            resetGame();
-        });
-
-        // --- Fungsi Utama Game ---
-
-        function drawPlayer() {
-            // Gambar Skuter Pemain (Asli)
-            ctx.drawImage(scooterImg, player.x, player.y, playerWidth, playerHeight);
-        }
-
-        function drawObjects() {
-            // Menggambar Mobil Musuh (Ganti kotak biru)
-            obstacles.forEach(obs => {
-                ctx.drawImage(obstacleCarImg, obs.x, obs.y, obstacleWidth, obstacleHeight);
-            });
-
-            // Menggambar Koin Berwajah (Asli)
-            coins.forEach(coin => {
-                // Gambar koin sebagai lingkaran untuk deteksi tabrakan yang akurat
-                ctx.drawImage(coinImg, coin.x - coinRadius, coin.y - coinRadius, coinRadius * 2, coinRadius * 2);
-            });
-        }
-
-        function drawUI() {
-            // Kita tidak menggambar UI di dalam Canvas lagi, melainkan menggunakan overlay CSS
-            // Ini untuk mencegah kedipan dan pergeseran area canvas
-            scoreDisplay.textContent = `Uang: Rp ${moneyScore.toLocaleString('id-ID')}`;
-            speedDisplay.textContent = `Kecepatan: Lvl ${gameLevel}`;
-        }
-
-        function drawRoadLines() {
-            // Garis putus-putus tengah jalan
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 4;
+            // Garis pembatas jalan
+            ctx.strokeStyle = '#ffffff';
             ctx.setLineDash([20, 20]);
+            ctx.lineDashOffset = -frames * 5;
+            ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.moveTo(canvas.width / 2, 0);
             ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
-            ctx.setLineDash([]); // Reset agar garis lain tidak putus-putus
-        }
 
-        // --- Logika Game ---
+            // Gambar Sukuty
+            ctx.fillStyle = scooty.color;
+            ctx.fillRect(scooty.x, scooty.y, scooty.width, scooty.height);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(scooty.x + 5, scooty.y, scooty.width - 10, 5);
 
-        function updateGame() {
-            if (!isGameRunning || !isImagesLoaded) return;
+            // Gambar Rintangan (Mobil Musuh)
+            ctx.fillStyle = '#2c3e50';
+            obstacles.forEach(obs => {
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+            });
 
-            frames++;
+            // Gambar Koin
+            ctx.fillStyle = '#f1c40f';
+            coins.forEach(coin => {
+                ctx.beginPath();
+                ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
 
-            // Pergerakan Pemain
-            if (keys.left && player.x > 0) {
-                player.x -= player.speed;
-            }
-            if (keys.right && player.x < canvas.width - playerWidth) {
-                player.x += player.speed;
-            }
+            // Papan Skor
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Skor: ${score}`, 20, 35);
 
-            // Spawn objek baru secara acak
-            if (frames % 100 === 0) { // Kotak musuh
-                let spawnX = Math.random() * (canvas.width - obstacleWidth);
-                obstacles.push({ x: spawnX, y: -obstacleHeight });
-            }
-            if (frames % 130 === 0) { // Koin emas
-                let spawnX = Math.random() * (canvas.width - (coinRadius * 2)) + coinRadius;
-                coins.push({ x: spawnX, y: -coinRadius * 2 });
-            }
-
-            // Pergerakan objek jatuh
-            let currentSpeed = gameSpeed + (gameLevel * 0.5);
-            obstacles.forEach(obs => obs.y += currentSpeed);
-            coins.forEach(coin => coin.y += currentSpeed * 0.8); // Koin lebih lambat
-
-            // Hapus objek yang keluar layar
-            obstacles = obstacles.filter(obs => obs.y < canvas.height);
-            coins = coins.filter(coin => coin.y < canvas.height);
-
-            // Cek Tabrakan
-            checkCollisions();
-
-            // Naikkan Level
-            if (frames % 1000 === 0) { // Setiap ~16 detik
-                gameLevel++;
-            }
-        }
-
-        function checkCollisions() {
-            const playerRect = {
-                left: player.x,
-                right: player.x + playerWidth,
-                top: player.y,
-                bottom: player.y + playerHeight
-            };
-
-            // Cek rintangan kotak
-            for (let i = 0; i < obstacles.length; i++) {
-                const obs = obstacles[i];
-                if (
-                    playerRect.left < obs.x + obstacleWidth &&
-                    playerRect.right > obs.x &&
-                    playerRect.top < obs.y + obstacleHeight &&
-                    playerRect.bottom > obs.y
-                ) {
-                    endGame();
-                    return;
-                }
-            }
-
-            // Cek koin (disederhanakan menggunakan bounding box kotak)
-            for (let i = coins.length - 1; i >= 0; i--) {
-                const coin = coins[i];
-                // Hitbox koin (bounding box)
-                let coinBox = {
-                    left: coin.x - coinRadius,
-                    right: coin.x + coinRadius,
-                    top: coin.y - coinRadius,
-                    bottom: coin.y + coinRadius
-                };
-
-                if (
-                    playerRect.left < coinBox.right &&
-                    playerRect.right > coinBox.left &&
-                    playerRect.top < coinBox.bottom &&
-                    playerRect.bottom > coinBox.top
-                ) {
-                    moneyScore += 100;
-                    coins.splice(i, 1);
-                }
+            // Tampilan Game Over
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#e74c3c';
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER 💥', canvas.width / 2, canvas.height / 2 - 20);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '16px Arial';
+                ctx.fillText(`Total Skor Kamu: ${score}`, canvas.width / 2, canvas.height / 2 + 15);
+                
+                ctx.fillStyle = '#2ecc71';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText('KETUK LAYAR UNTUK MAIN LAGI', canvas.width / 2, canvas.height / 2 + 55);
             }
         }
 
-        function endGame() {
-            isGameRunning = false;
-            finalMoneyText.textContent = `Total Uang: Rp ${moneyScore.toLocaleString('id-ID')}`;
-            gameOverScreen.style.display = 'flex';
-        }
-
-        function resetGame() {
-            moneyScore = 0;
-            gameLevel = 1;
-            frames = 0;
-            player.x = canvas.width / 2 - playerWidth / 2;
-            obstacles = [];
-            coins = [];
-            gameOverScreen.style.display = 'none';
-            isGameRunning = true;
-        }
-
-        // --- Loop Utama Game ---
         function gameLoop() {
-            if (!isImagesLoaded) return; // Tunggu gambar dimuat
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Bersihkan canvas
-
-            drawRoadLines();
-            drawObjects();
-            drawPlayer();
-            drawUI();
-            updateGame();
-
+            update();
+            draw();
             requestAnimationFrame(gameLoop);
         }
 
-        // Catatan: gameLoop dipanggil di dalam loadImage saat gambar selesai dimuat.
-
+        gameLoop();
     </script>
 </body>
 </html>
