@@ -19,28 +19,7 @@
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
-            position: relative;
         }
-
-        /* Logos di Pojok Kiri Atas */
-        .top-left-logos {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            display: flex;
-            gap: 8px;
-            z-index: 100;
-        }
-
-        .top-left-logos img {
-            width: 45px;
-            height: 45px;
-            object-fit: cover;
-            border-radius: 6px;
-            border: 2px solid #f1c40f;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
-        }
-
         h1 {
             margin: 5px 0 2px 0;
             font-size: 24px;
@@ -89,12 +68,6 @@
     </style>
 </head>
 <body>
-
-    <div class="top-left-logos">
-        <img src="rpl.jpeg" alt="Logo RPL">
-        <img src="smkn1sanden.jpeg" alt="Logo SMKN 1 Sanden">
-        <img src="icgrup.jpeg" alt="Logo IC GRUP">
-    </div>
 
     <h1>GAME SUKUTY 🛵✨</h1>
     <p>Sentuh tombol di bawah untuk menghindari mobil!</p>
@@ -147,9 +120,13 @@
         btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); isMovingRight = true; });
         btnRight.addEventListener('touchend', () => isMovingRight = false);
 
-        // Restart Game
-        canvas.addEventListener('touchstart', () => { if (gameOver) resetGame(); });
-        canvas.addEventListener('click', () => { if (gameOver) resetGame(); });
+        // Klik canvas untuk restart saat Game Over
+        canvas.addEventListener('touchstart', () => {
+            if (gameOver) resetGame();
+        });
+        canvas.addEventListener('click', () => {
+            if (gameOver) resetGame();
+        });
 
         function resetGame() {
             score = 0;
@@ -161,14 +138,12 @@
         }
 
         function spawnObjects() {
-            // KALKULASI TINGKAT KESULITAN BERDASARKAN SKOR
-            // Setiap 10 koin (+100 skor), level bertambah
-            let speedBonus = Math.floor(score / 30) * 0.8; // Kecepatan melaju bertambah
+            // Kalkulasi Kecepatan Ekstra Berdasarkan Skor
+            let speedBonus = Math.floor(score / 30) * 0.8; 
             
-            // Jarak spasi spawn objek semakin sering (minimal batas 25 frame)
+            // Interval Spawn Rintangan (Semakin tinggi skor, semakin sering muncul)
             let spawnIntervalObs = Math.max(25, 80 - Math.floor(score / 20) * 5);
 
-            // Spawn Rintangan
             if (frames % spawnIntervalObs === 0) { 
                 let obsX = Math.random() * (canvas.width - 40);
                 obstacles.push({ 
@@ -180,7 +155,6 @@
                 });
             }
 
-            // Spawn Koin
             if (frames % 100 === 0) { 
                 let coinX = Math.random() * (canvas.width - 20);
                 coins.push({ 
@@ -198,7 +172,7 @@
             frames++;
             spawnObjects();
 
-            // Gerakan pemain
+            // Gerakan pemain (Gabungan Keyboard PC + Touch HP)
             if ((keys['ArrowLeft'] || keys['a'] || keys['A'] || isMovingLeft) && scooty.x > 0) {
                 scooty.x -= scooty.speed;
             }
@@ -230,92 +204,3 @@
                 let distY = Math.abs(coins[i].y - (scooty.y + scooty.height/2));
 
                 if (distX < (scooty.width/2 + coins[i].radius) && distY < (scooty.height/2 + coins[i].radius)) {
-                    score += 10;
-                    coins.splice(i, 1);
-                    continue;
-                }
-
-                if (coins[i].y > canvas.height) coins.splice(i, 1);
-            }
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Gambar Jalanan
-            ctx.fillStyle = '#7f8c8d';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Kecepatan animasi garis jalanan juga ikut meningkat seiring skor!
-            let lineSpeedBonus = Math.floor(score / 30) * 1.5;
-            ctx.strokeStyle = '#ffffff';
-            ctx.setLineDash([20, 20]);
-            ctx.lineDashOffset = -frames * (5 + lineSpeedBonus);
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(canvas.width / 2, 0);
-            ctx.lineTo(canvas.width / 2, canvas.height);
-            ctx.stroke();
-
-            // Gambar Sukuty
-            ctx.fillStyle = scooty.color;
-            ctx.fillRect(scooty.x, scooty.y, scooty.width, scooty.height);
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(scooty.x + 5, scooty.y, scooty.width - 10, 5);
-
-            // Gambar Rintangan (Mobil Musuh)
-            ctx.fillStyle = '#2c3e50';
-            obstacles.forEach(obs => {
-                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-            });
-
-            // Gambar Koin
-            ctx.fillStyle = '#f1c40f';
-            coins.forEach(coin => {
-                ctx.beginPath();
-                ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            // Papan Skor & Level Kecepatan
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 18px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(`Skor: ${score}`, 20, 35);
-            
-            // Indikator Kecepatan/Laju Jalan
-            let currentSpeedLvl = 1 + Math.floor(score / 30);
-            ctx.fillStyle = '#f1c40f';
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText(`Kecepatan: Lvl ${currentSpeedLvl}`, 20, 58);
-
-            // Tampilan Game Over
-            if (gameOver) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                ctx.fillStyle = '#e74c3c';
-                ctx.font = 'bold 32px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('GAME OVER 💥', canvas.width / 2, canvas.height / 2 - 20);
-                
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '16px Arial';
-                ctx.fillText(`Total Skor Kamu: ${score}`, canvas.width / 2, canvas.height / 2 + 15);
-                
-                ctx.fillStyle = '#2ecc71';
-                ctx.font = 'bold 14px Arial';
-                ctx.fillText('KETUK LAYAR UNTUK MAIN LAGI', canvas.width / 2, canvas.height / 2 + 55);
-            }
-        }
-
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-
-        gameLoop();
-    </script>
-</body>
-</html>
